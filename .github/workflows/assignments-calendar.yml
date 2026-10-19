@@ -1,0 +1,32 @@
+name: Assignments calendar
+
+on:
+  schedule:
+    - cron: "0 * * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Read project board
+        env:
+          GH_TOKEN: ${{ secrets.PROJECT_TOKEN }}
+        run: gh project item-list 3 --owner Wespiseb --format json --limit 200 > items.json
+
+      - name: Build calendar
+        env:
+          ICS_PATH: calendar/assignments-k7Qm2xv9Rt4pLw8d.ics
+        run: python3 scripts/make_ics.py
+
+      - name: Commit changes
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add calendar
+          git diff --staged --quiet || (git commit -m "Update assignments calendar" && git push)
